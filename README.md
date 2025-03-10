@@ -1,6 +1,8 @@
 # Donor Game with Cultural Evolution
 
-This project implements an evolutionary donor game where agents powered by Large Language Models (LLMs) interact in a resource-sharing environment. The game explores how different strategies evolve over generations and how various mechanisms (reputation, punishment) affect cooperation.
+This repo takes over code by https://github.com/aronvallinder/llm-donor-game/ and refactors the main ipynb into a more manageable codebase. 
+
+The project implements an evolutionary donor game where agents powered by Large Language Models (LLMs) interact in a resource-sharing environment. The game explores how different strategies evolve over generations and how various mechanisms (reputation, punishment) affect cooperation.
 
 ## Game Description
 
@@ -105,11 +107,3 @@ llm-donor-game/
 ├── requirements.txt
 └── README.md
 ```
-
-## Contributing
-
-Feel free to submit issues and pull requests.
-
-## License
-
-[Your chosen license]
