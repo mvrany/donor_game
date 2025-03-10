@@ -1,0 +1,11 @@
+/checkpoints/
+/logs/
+/results/
+__pycache__/
+*/__pycache__/
+**/__pycache__/
+*.py[cod]
+/backup
+
+.vscode/launch.json
+.env
