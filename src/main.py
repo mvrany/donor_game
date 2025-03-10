@@ -1,8 +1,8 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-# from openai import OpenAI
-# import anthropic
+from openai import OpenAI
+import anthropic
 import google.generativeai as genai
 
 from src.game.evolution import run_generations
@@ -31,6 +31,7 @@ SELECTION_METHOD = "top"  # Options: "top", "random", "reputation"
 
 # LLM configuration
 LLM_TYPE = "gemini-2.0-flash"  # Options: "gpt-3.5-turbo", "gpt-4", "claude-3-opus", "claude-3-sonnet", "gemini-2.0-flash"
+# LLM_TYPE = "claude-3-5-sonnet-latest"
 SAVE_PATH = "results"
 CHECKPOINT_DIR = "checkpoints"
 
@@ -66,18 +67,18 @@ def get_system_prompt() -> str:
 
 def get_llm_client():
     """Initialize and return the appropriate LLM client based on LLM_TYPE."""
-    # if LLM_TYPE.startswith("gpt"):
-    #     return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    # elif LLM_TYPE.startswith("claude"):
-    #     return anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-    # elif LLM_TYPE.startswith("gemini"):
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise ValueError("GEMINI_API_KEY not found in environment variables")
-    genai.configure(api_key=api_key)
-    return genai
-    # else:
-    #     raise ValueError(f"Unsupported LLM type: {LLM_TYPE}")
+    if LLM_TYPE.startswith("gpt"):
+        return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    elif LLM_TYPE.startswith("claude"):
+        return anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    elif LLM_TYPE.startswith("gemini"):
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY not found in environment variables")
+        genai.configure(api_key=api_key)
+        return genai
+    else:
+        raise ValueError(f"Unsupported LLM type: {LLM_TYPE}")
 
 def get_experiment_parameters() -> dict:
     """Get all experiment parameters in a dictionary."""

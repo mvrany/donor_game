@@ -8,6 +8,12 @@ from src.models.simulation_data import AgentRoundData
 from src.utils.llm import prompt_llm
 from src.utils.helpers import get_last_three_reversed
 from src.utils.logger import setup_logger
+from src.game.prompts import (
+    GAME_INTERACTION_PROMPT,
+    PARTNER_CHOICE_INSTRUCTION,
+    COSTLY_PUNISHMENT_INSTRUCTION,
+    NO_PUNISHMENT_INSTRUCTION
+)
 
 # Set up logger for this module
 logger = setup_logger(__name__)
@@ -395,14 +401,21 @@ def generate_donor_prompt(
     """
     strategy_text = f"As you will recall, here is the strategy you decided to follow: {donor.strategy}" if donor.strategy else ""
     
+    # Get appropriate punishment instruction
     if punishment_mechanism == "partner_choice":
-        punishment_text = f"If you do not wish to play with {recipient.name}, simply state: Refuse to play. Otherwise, state your answer as a real number between 0 and {donor.resources} (inclusive)."
+        punishment_text = PARTNER_CHOICE_INSTRUCTION.format(
+            recipient_name=recipient.name,
+            donor_resources=donor.resources
+        )
         punishment_text_2 = ""
     elif punishment_mechanism == "costly_punishment":
-        punishment_text = f"State your answer as EITHER Donate, x OR Punish, x, to either have them receive {cooperation_gain}x units or punish them by taking away {punishment_loss}x of their units."
-        punishment_text_2 = f"Remember, state your answer as EITHER Donate, x OR Punish, x."
+        punishment_text = COSTLY_PUNISHMENT_INSTRUCTION.format(
+            cooperation_gain=cooperation_gain,
+            punishment_loss=punishment_loss
+        )
+        punishment_text_2 = "Remember, state your answer as EITHER Donate, x OR Punish, x."
     else:
-        punishment_text = f"State your answer as a real number between 0 and {donor.resources} (inclusive)."
+        punishment_text = NO_PUNISHMENT_INSTRUCTION.format(donor_resources=donor.resources)
         punishment_text_2 = ""
 
     recipient_behavior = ""
@@ -413,21 +426,15 @@ def generate_donor_prompt(
         else:
             recipient_behavior = str(last_trace)
 
-    return (
-        f"Your name is {donor.name}. "
-        f"{strategy_text}"
-        f"This is generation {generation}. It is now round {round}. "
-        f"In this round, you have been paired with {recipient.name}. They currently have {recipient.resources} units of the valuable resource."
-        f"{recipient_behavior}"
-        f"You will take the role of donor. You currently have {donor.resources} units of the valuable resource. "
-        f"How many units do you give up?"
-        f"{punishment_text}"
-        "Very briefly think step by step about how you apply your strategy in this situation and then provide your answer."
-        "State your full response in the following form:"
-        "Justification:"
-        "[multi-line justification here]"
-        " "
-        "Answer: [answer here]"
-        "Remember: First state your justification and after that your answer."
-        f"{punishment_text_2}"
+    return GAME_INTERACTION_PROMPT.format(
+        donor_name=donor.name,
+        strategy_text=strategy_text,
+        generation=generation,
+        round=round,
+        recipient_name=recipient.name,
+        recipient_resources=recipient.resources,
+        recipient_behavior=recipient_behavior,
+        donor_resources=donor.resources,
+        punishment_text=punishment_text,
+        punishment_text_2=punishment_text_2
     ) 

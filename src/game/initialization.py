@@ -4,6 +4,13 @@ import random
 
 from ..models.agent import Agent
 from ..utils.llm import prompt_llm
+from src.game.prompts import (
+    INITIAL_STRATEGY_PROMPT,
+    EVOLVED_STRATEGY_PROMPT,
+    COSTLY_PUNISHMENT_TEXT,
+    PARTNER_CHOICE_PUNISHMENT_TEXT,
+    NO_PUNISHMENT_TEXT
+)
 
 def generate_strategy(
     agent_name: str,
@@ -33,54 +40,25 @@ def generate_strategy(
     Returns:
         Tuple of (strategy_justification, strategy)
     """
+    # Get appropriate punishment text
     if punishment_mechanism == "costly_punishment":
-        punishment_text = f"You may also choose to punish the recipient by spending x units to take away {punishment_loss}x of their resources. Bear in mind that others may punish you too."
+        punishment_text = COSTLY_PUNISHMENT_TEXT.format(punishment_loss=punishment_loss)
     elif punishment_mechanism == "partner_choice":
-        punishment_text = "You may also choose to punish the recipient by refraining from any interaction. Bear in mind that others may punish you too."
+        punishment_text = PARTNER_CHOICE_PUNISHMENT_TEXT
     else:
-        punishment_text = ""
+        punishment_text = NO_PUNISHMENT_TEXT
 
+    # Select and format appropriate prompt
     if generation_number == 1:
-        prompt = (
-            f"Your name is {agent_name}. "
-            "Based on the description of the game, create a strategy that you will follow in the game. "
-            "As a donor, you will receive limited information about the recipient and their recent interactions:"
-            "You will see what the recipient (let's call them A) did in the immediately preceding round only."
-            "You will also see what A's partner from that round (let's call them B) did in their preceding round."
-            "This chain continues for at most three rounds back."
-            "Important: You do NOT have access to multiple rounds of information about A directly. You only know what A did in the single most recent round."
-            "Example (assuming it's now round 4):"
-            "You are paired with A."
-            "You know: In round 3, A donated X% to B."
-            "You also know: In round 2, B donated Y% to C."
-            "And finally: In round 1, C donated Z% to D."
-            "Remember: This is all the information you have. You don't know what A did in rounds 1 or 2, only in round 3."
-            f"{punishment_text}"
-            "In the first round, there will be no information about the recipient's previous behavior - think carefully about how much to donate in that case."
-            "Before formulating your strategy, briefly think step by step about what would be a successful strategy in this game."
-            "Then describe your strategy briefly without explanation in one sentence that starts: My strategy will be."
+        prompt = INITIAL_STRATEGY_PROMPT.format(
+            agent_name=agent_name,
+            punishment_text=punishment_text
         )
     else:
-        prompt = (
-            f"Your name is {agent_name}. "
-            "How would you approach the game? Here is the advice of the best-performing 50% of the previous generation, along with their final scores."
-            "Modify this advice to create your own strategy."
-            f"{inherited_strategies}"
-            "As a donor, you will receive limited information about the recipient and their recent interactions:"
-            "You will see what the recipient (let's call them A) did in the immediately preceding round only."
-            "You will also see what A's partner from that round (let's call them B) did in their preceding round."
-            "This chain continues for at most three rounds back."
-            "Important: You do NOT have access to multiple rounds of information about A directly. You only know what A did in the single most recent round."
-            "Example (assuming it's now round 4):"
-            "You are paired with A."
-            "You know: In round 3, A donated X% to B."
-            "You also know: In round 2, B donated Y% to C."
-            "And finally: In round 1, C donated Z% to D."
-            "Remember: This is all the information you have. You don't know what A did in rounds 1 or 2, only in round 3."
-            f"{punishment_text}"
-            "In the first round, there will be no information about the recipient's previous behavior - think carefully about how much to donate in that case."
-            "Before formulating your strategy, briefly think step by step about what would be a successful strategy in this game. In particular, think about how you can improve on the surviving agents' strategies."
-            "Then describe your strategy briefly without explanation in one sentence that starts: My strategy will be."
+        prompt = EVOLVED_STRATEGY_PROMPT.format(
+            agent_name=agent_name,
+            inherited_strategies=inherited_strategies,
+            punishment_text=punishment_text
         )
 
     strategy_output = prompt_llm(prompt, llm_type=llm_type, system_prompt=system_prompt, client=client)
